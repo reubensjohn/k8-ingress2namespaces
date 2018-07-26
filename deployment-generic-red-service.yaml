@@ -1,0 +1,68 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: website
+  namespace: red
+  labels:
+    version: "1"
+    env: dev
+    app: website
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        version: "1"
+        env: dev
+        app: website
+    spec:
+      restartPolicy: Always
+      containers:
+      - args: []
+        env:
+        - name: TEST
+          value: "1000"
+        imagePullPolicy: IfNotPresent
+        image: amitrjain/website-red
+        name: website
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:  
+  name: website
+  namespace: red
+  labels:
+    version: "1"
+    env: dev
+    app: website
+spec:
+  type: NodePort
+  ports:  
+  - name: http
+    port: 80
+    targetPort: 80
+  selector:
+    version: "1"
+    env: dev
+    app: website
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: website-ingress
+  namespace: red
+  annotations: 
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - path: /red
+        backend:
+          serviceName: website
+          servicePort: 80
